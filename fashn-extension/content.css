@@ -1,0 +1,288 @@
+/* FASHN VTON Scoped Styles */
+#fashn-vton-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483640;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#fashn-vton-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.5);
+}
+
+#fashn-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#fashn-modal {
+  background: #12121a;
+  color: #f0f0f5;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#fashn-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#fashn-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#fashn-modal-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#fashn-modal-setup {
+  padding: 20px;
+}
+
+.fashn-photos {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.fashn-photo-box {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.fashn-photo-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.fashn-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#fashn-person-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.fashn-btn {
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fashn-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fashn-btn-primary {
+  background: #8b5cf6;
+  color: white;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.fashn-btn-primary:hover:not(:disabled) {
+  background: #7c3aed;
+}
+
+.fashn-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f0f0f5;
+}
+
+.fashn-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.fashn-btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.fashn-controls {
+  margin-bottom: 20px;
+}
+
+.fashn-controls label {
+  display: block;
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.fashn-controls select {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  outline: none;
+}
+
+.fashn-error {
+  color: #ef4444;
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+}
+
+/* Loading State */
+#fashn-modal-loading {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.fashn-glow-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.fashn-glow-orb {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #8b5cf6 0%, rgba(139,92,246,0) 70%);
+  border-radius: 50%;
+  animation: fashn-pulse 2s ease-in-out infinite alternate;
+  filter: blur(6px);
+}
+
+.fashn-glow-ring {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  border-radius: 50%;
+  animation: fashn-ripple 3s linear infinite;
+}
+
+.fashn-glow-ring.fashn-delayed {
+  animation-delay: 1.5s;
+}
+
+@keyframes fashn-pulse {
+  0% { transform: scale(0.8); opacity: 0.4; }
+  100% { transform: scale(1.6); opacity: 1; }
+}
+
+@keyframes fashn-ripple {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+#fashn-phrase {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f0f0f5;
+  margin: 8px 0;
+  transition: opacity 0.3s ease;
+}
+
+.fashn-hint {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Result State */
+#fashn-modal-result {
+  display: flex;
+  flex-direction: column;
+}
+
+#fashn-result-img {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
+  background: #0a0a0f;
+}
+
+.fashn-result-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0,0,0,0.2);
+}
+
+.fashn-result-actions button {
+  flex: 1;
+}

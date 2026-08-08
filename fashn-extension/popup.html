@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Shopping Buddy Settings</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+        <path d="M6 3h12l4 6-10 13L2 9z" />
+        <path d="M11 3l1 10" />
+        <path d="M2 9h20" />
+      </svg>
+      <h1>Shopping Buddy</h1>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="enable-toggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="section">
+    <label for="api-url">API Server URL</label>
+    <div class="input-group">
+      <input type="text" id="api-url" placeholder="https://your-server.trycloudflare.com">
+      <button id="save-url-btn">Save</button>
+    </div>
+    <div id="url-status" class="status-msg"></div>
+  </div>
+
+  <div class="section">
+    <label for="inference-quality">Inference Quality (Steps: <span id="steps-value">15</span>)</label>
+    <div style="margin-top: 8px;">
+      <input type="range" id="inference-quality" min="10" max="50" step="5" value="15" style="width: 100%;">
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-top: 4px;">
+        <span>Fast (10)</span>
+        <span>Ultra (50)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <label>Your Photo</label>
+    <div class="photo-upload-area" id="photo-area">
+      <div id="photo-placeholder">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17,8 12,3 7,8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span>Upload Photo</span>
+      </div>
+      <img id="photo-preview" style="display:none;" />
+      <input type="file" id="file-input" accept="image/*" hidden>
+    </div>
+    <button id="change-photo-btn" class="btn-secondary" style="display:none; width:100%; margin-top:8px;">Change Photo</button>
+    
+    <div class="privacy-note">
+      Your photo is stored locally in your browser only and sent only to the try-on server you've configured above. It is not stored on our servers beyond generating each result.
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

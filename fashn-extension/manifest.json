@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Shopping Buddy",
+  "version": "1.0.0",
+  "description": "Your AI shopping buddy — virtually try on garments while browsing any Shopify store.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Shopping Buddy Settings"
+  }
+}
