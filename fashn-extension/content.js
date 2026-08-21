@@ -46,7 +46,7 @@ async function extractProductData() {
 
   for (let img of imgs) {
     const area = img.clientWidth * img.clientHeight;
-    if (area > maxArea && area > 40000) { // at least 200x200
+    if (area > maxArea && area > 40000) {
       maxArea = area;
       largestImg = img;
     }
@@ -69,9 +69,8 @@ function normalizeImageUrl(url) {
 let fashnProductData = null;
 
 async function init() {
-  // Check if extension is enabled globally
   chrome.storage.local.get(['extensionEnabled'], async (res) => {
-    if (res.extensionEnabled === false) return; // Note: false strictly, default is true
+    if (res.extensionEnabled === false) return;
 
     if (!isShopifyStore()) return;
 
@@ -135,31 +134,54 @@ function openModal() {
           <select id="fashn-category">
             <option value="">Auto-detect</option>
             <option value="tops">Tops / T-Shirts</option>
-            <option value="kurta">Kurta / Ethnic Wear</option>
-            <option value="dress">Dresses</option>
+            <option value="one-pieces">Dresses / One-Pieces</option>
             <option value="bottoms">Bottoms / Pants</option>
           </select>
         </div>
 
         <div id="fashn-error" class="fashn-error" style="display:none;"></div>
 
-        <button id="fashn-generate-btn" class="fashn-btn fashn-btn-primary" disabled>Generate Try-On</button>
+        <button id="fashn-generate-btn" class="fashn-btn fashn-btn-primary" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+          </svg>
+          Generate Try-On
+        </button>
       </div>
 
       <div id="fashn-modal-loading" style="display:none;">
-        <div class="fashn-glow-container">
-          <div class="fashn-glow-orb"></div>
-          <div class="fashn-glow-ring"></div>
-          <div class="fashn-glow-ring fashn-delayed"></div>
+        <div class="fashn-loader-wrap">
+          <div class="fashn-loader-spinner"></div>
+          <div class="fashn-loader-progress">
+            <div class="fashn-loader-bar" id="fashn-progress-bar"></div>
+          </div>
         </div>
         <h3 id="fashn-phrase">Fitting your garment...</h3>
+        <p id="fashn-timer" class="fashn-timer">0s</p>
         <p class="fashn-hint">Powered by Shopping Buddy AI</p>
       </div>
 
       <div id="fashn-modal-result" style="display:none;">
-        <img id="fashn-result-img" />
+        <div class="fashn-result-compare">
+          <div class="fashn-compare-item">
+            <span class="fashn-compare-label">Original</span>
+            <img id="fashn-original-person" class="fashn-compare-img" />
+          </div>
+          <div class="fashn-compare-item">
+            <span class="fashn-compare-label">Try-On Result</span>
+            <img id="fashn-result-img" class="fashn-compare-img" />
+          </div>
+        </div>
+        <div id="fashn-gen-stats" class="fashn-gen-stats"></div>
         <div class="fashn-result-actions">
-          <button id="fashn-download-btn" class="fashn-btn fashn-btn-primary">Download</button>
+          <button id="fashn-download-btn" class="fashn-btn fashn-btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7,10 12,15 17,10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download
+          </button>
           <button id="fashn-reset-btn" class="fashn-btn fashn-btn-secondary">Try Another</button>
         </div>
       </div>
@@ -167,6 +189,11 @@ function openModal() {
     </div>
   `;
   document.body.appendChild(modal);
+
+  // Close on overlay click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
 
   // Event Listeners
   document.getElementById('fashn-modal-close').onclick = () => modal.style.display = 'none';
@@ -189,17 +216,26 @@ function openModal() {
 
   uploadBtn.onclick = () => fileInput.click();
   
+  // Allow clicking person box to re-upload
+  document.getElementById('fashn-person-box').addEventListener('click', (e) => {
+    if (e.target.closest('#fashn-upload-btn')) return;
+    if (personPreview.style.display === 'block') fileInput.click();
+  });
+
   fileInput.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Compress image before storing to save chrome.storage space
     const reader = new FileReader();
     reader.onloadend = () => {
-      const b64 = reader.result;
-      chrome.storage.local.set({ personImage: b64 });
-      personPreview.src = b64;
-      personPreview.style.display = 'block';
-      personPlaceholder.style.display = 'none';
-      generateBtn.disabled = false;
+      compressImage(reader.result, 800, 0.85).then((compressed) => {
+        chrome.storage.local.set({ personImage: compressed });
+        personPreview.src = compressed;
+        personPreview.style.display = 'block';
+        personPlaceholder.style.display = 'none';
+        generateBtn.disabled = false;
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -209,7 +245,7 @@ function openModal() {
   document.getElementById('fashn-download-btn').onclick = () => {
     const a = document.createElement('a');
     a.href = document.getElementById('fashn-result-img').src;
-    a.download = 'fashn-tryon.png';
+    a.download = `shopping-buddy-tryon-${Date.now()}.png`;
     a.click();
   };
 
@@ -220,8 +256,30 @@ function openModal() {
   };
 }
 
+// --- Image Compression ---
+function compressImage(dataUrl, maxDim, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
 // --- Generation Logic ---
 let timerInterval = null;
+let elapsedTimer = null;
 
 const FUNNY_PHRASES = [
   "Fitting your garment...",
@@ -245,6 +303,25 @@ function startGeneration() {
   document.getElementById('fashn-modal-setup').style.display = 'none';
   document.getElementById('fashn-modal-loading').style.display = 'flex';
   
+  // Animated progress bar (estimate ~15s)
+  const bar = document.getElementById('fashn-progress-bar');
+  bar.style.width = '0%';
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress += (90 - progress) * 0.04; // eases towards 90%
+    bar.style.width = progress + '%';
+  }, 200);
+
+  // Elapsed timer
+  const timerEl = document.getElementById('fashn-timer');
+  let elapsed = 0;
+  clearInterval(elapsedTimer);
+  elapsedTimer = setInterval(() => {
+    elapsed++;
+    timerEl.textContent = elapsed + 's';
+  }, 1000);
+
+  // Rotating phrases
   const phraseEl = document.getElementById('fashn-phrase');
   phraseEl.innerText = FUNNY_PHRASES[0];
   clearInterval(timerInterval);
@@ -254,15 +331,19 @@ function startGeneration() {
       phraseEl.innerText = FUNNY_PHRASES[Math.floor(Math.random() * FUNNY_PHRASES.length)];
       phraseEl.style.opacity = '1';
     }, 300);
-  }, 2000);
+  }, 2500);
 
-  // Check health first to ensure URL is configured
+  const generationStartTime = Date.now();
+
+  // Check health first
   chrome.runtime.sendMessage({ type: 'CHECK_HEALTH' }, (healthRes) => {
     if (healthRes.status === 'no_url') {
+      clearInterval(progressInterval);
       showError('Please configure your API Server URL in the extension popup first.');
       return;
     }
     if (healthRes.status === 'error') {
+      clearInterval(progressInterval);
       showError('Cannot connect to the API server. Is it running?');
       return;
     }
@@ -273,36 +354,43 @@ function startGeneration() {
         personImage: res.personImage,
         garmentImage: fashnProductData.image,
         category: document.getElementById('fashn-category').value,
-        num_timesteps: 15, // lower default for snappy in-page experience
+        num_timesteps: 15,
       };
 
       chrome.runtime.sendMessage({ type: 'SUBMIT_TRYON', data: payload }, (submitRes) => {
         if (submitRes.status === 'error') {
+          clearInterval(progressInterval);
           showError(submitRes.error);
           return;
         }
 
         const pollEndpoint = submitRes.data.poll_endpoint;
         if (!pollEndpoint) {
+          clearInterval(progressInterval);
           showError('Server did not return a poll_endpoint.');
           return;
         }
 
-        pollStatus(pollEndpoint);
+        pollStatus(pollEndpoint, progressInterval, generationStartTime);
       });
     });
   });
 }
 
-function pollStatus(pollEndpoint) {
+function pollStatus(pollEndpoint, progressInterval, startTime) {
   setTimeout(() => {
     chrome.runtime.sendMessage({ type: 'POLL_STATUS', pollEndpoint }, (res) => {
       if (res.status === 'completed') {
-        showSuccess(res.imageBase64);
+        clearInterval(progressInterval);
+        const bar = document.getElementById('fashn-progress-bar');
+        bar.style.width = '100%';
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        setTimeout(() => showSuccess(res.imageBase64, totalTime, res.steps), 400);
       } else if (res.status === 'failed' || res.status === 'error') {
+        clearInterval(progressInterval);
         showError(res.error || 'Generation failed.');
       } else {
-        pollStatus(pollEndpoint); // keep polling
+        pollStatus(pollEndpoint, progressInterval, startTime);
       }
     });
   }, 1000);
@@ -310,6 +398,7 @@ function pollStatus(pollEndpoint) {
 
 function showError(msg) {
   clearInterval(timerInterval);
+  clearInterval(elapsedTimer);
   document.getElementById('fashn-modal-loading').style.display = 'none';
   document.getElementById('fashn-modal-setup').style.display = 'block';
   const err = document.getElementById('fashn-error');
@@ -317,11 +406,26 @@ function showError(msg) {
   err.style.display = 'block';
 }
 
-function showSuccess(imgB64) {
+function showSuccess(imgB64, totalTime, steps) {
   clearInterval(timerInterval);
+  clearInterval(elapsedTimer);
   document.getElementById('fashn-modal-loading').style.display = 'none';
   document.getElementById('fashn-modal-result').style.display = 'flex';
   document.getElementById('fashn-result-img').src = imgB64;
+
+  // Show original person photo for comparison
+  chrome.storage.local.get(['personImage'], (res) => {
+    if (res.personImage) {
+      document.getElementById('fashn-original-person').src = res.personImage;
+    }
+  });
+
+  // Show generation stats
+  const statsEl = document.getElementById('fashn-gen-stats');
+  if (totalTime) {
+    statsEl.innerHTML = `Generated in <strong>${totalTime}s</strong>${steps ? ` · ${steps} steps` : ''}`;
+    statsEl.style.display = 'block';
+  }
 }
 
 // Start

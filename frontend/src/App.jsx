@@ -1,55 +1,33 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Shirt, Image as ImageIcon, Download, RefreshCw, AlertCircle } from 'lucide-react';
 import './App.css';
 import LandingPage from './LandingPage';
 import ExtensionInfo from './ExtensionInfo';
 
-// Mock Shopify Data
 const MOCK_PRODUCTS = [
   { id: 1, title: 'Classic White Tee', price: '$24.99', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80' },
   { id: 2, title: 'Denim Jacket', price: '$89.00', image: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?auto=format&fit=crop&w=500&q=80' },
   { id: 3, title: 'Summer Floral Dress', price: '$59.99', image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=500&q=80' },
-  { id: 4, title: 'Leather Moto Jacket', price: '$199.00', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=500&q=80' },
-  { id: 5, title: 'Graphic Hoodie', price: '$54.00', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=80' },
-  { id: 6, title: 'Minimalist Cardigan', price: '$45.00', image: 'https://images.unsplash.com/photo-1434389678369-183423d6a20d?auto=format&fit=crop&w=500&q=80' },
-  { id: 7, title: 'Silk Blouse', price: '$79.00', image: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=500&q=80' },
-  { id: 8, title: 'Vintage Polo', price: '$34.50', image: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=500&q=80' },
+  { id: 4, title: 'Leather Moto Jacket', price: '$199.00', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=500&q=80' }
 ];
 
-const API_BASE_URL = 'http://65.0.180.137:8000'; // Raw AWS IP
-
-const FUNNY_PHRASES = [
-  "Fitting your garment...",
-  "Stitching the pixels...",
-  "Ironing out the wrinkles...",
-  "Shirt is stuck, wait...",
-  "Ooh noo, dress is cracked...",
-  "Teaching the AI fashion...",
-  "Adding some extra drip...",
-  "Hey wait, almost there...",
-  "Checking the mirror..."
-];
+const API_BASE_URL = 'http://52.66.205.255:8000'; 
+const FUNNY_PHRASES = ["Fitting your garment...", "Stitching the pixels...", "Ironing out the wrinkles...", "Teaching the AI fashion..."];
 
 function App() {
   const [showApp, setShowApp] = useState(false);
   const [showExtensionInfo, setShowExtensionInfo] = useState(false);
-  const [activeTab, setActiveTab] = useState('shop');
   const [personImage, setPersonImage] = useState(null);
   const [garmentImage, setGarmentImage] = useState(null);
   
-  // Generation State
-  const [status, setStatus] = useState('idle'); // idle | generating | success | error
+  const [status, setStatus] = useState('idle'); 
   const [elapsedTime, setElapsedTime] = useState(0);
   const [resultImage, setResultImage] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [loadingPhrase, setLoadingPhrase] = useState(FUNNY_PHRASES[0]);
   
-  // Inference Quality
   const [steps, setSteps] = useState(15);
   const [generationTime, setGenerationTime] = useState(null);
 
-  // Handle Person Upload
   const handlePersonUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -58,16 +36,6 @@ function App() {
     }
   };
 
-  // Handle Custom Garment Upload
-  const handleGarmentUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setGarmentImage({ file, url, isCustom: true });
-    }
-  };
-
-  // Handle Mock Garment Selection
   const selectMockGarment = async (product) => {
     try {
       const response = await fetch(product.image);
@@ -81,16 +49,13 @@ function App() {
 
   const handleTryOn = async () => {
     if (!personImage || !garmentImage) return;
-    
     setStatus('generating');
     setElapsedTime(0);
     setErrorMessage('');
     
     const timer = setInterval(() => {
       setElapsedTime(prev => {
-        if (prev % 2 === 0) {
-          setLoadingPhrase(FUNNY_PHRASES[Math.floor(Math.random() * FUNNY_PHRASES.length)]);
-        }
+        if (prev % 2 === 0) setLoadingPhrase(FUNNY_PHRASES[Math.floor(Math.random() * FUNNY_PHRASES.length)]);
         return prev + 1;
       });
     }, 1000);
@@ -102,15 +67,10 @@ function App() {
       formData.append('steps', steps);
       formData.append('guidance_scale', 1.5);
 
-      const response = await fetch(`${API_BASE_URL}/api/try-on`, {
-        method: 'POST',
-        body: formData
-      });
-
+      const response = await fetch(`${API_BASE_URL}/api/try-on`, { method: 'POST', body: formData });
       if (!response.ok) throw new Error('Failed to start job');
       const { job_id, poll_endpoint } = await response.json();
 
-      // Poll
       const pollUrl = `${API_BASE_URL}${poll_endpoint}`;
       while (true) {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -119,7 +79,6 @@ function App() {
         
         const contentType = pollRes.headers.get('content-type');
         if (contentType && contentType.startsWith('image/')) {
-          // Job is complete and image is returned directly!
           const blob = await pollRes.blob();
           clearInterval(timer);
           setResultImage(URL.createObjectURL(blob));
@@ -128,7 +87,6 @@ function App() {
         }
 
         const pollData = await pollRes.json();
-
         if (pollData.status === 'completed') {
           clearInterval(timer);
           setResultImage(`${API_BASE_URL}${pollData.image_url}`);
@@ -149,211 +107,94 @@ function App() {
     }
   };
 
-  if (showExtensionInfo) {
-    return <ExtensionInfo onBack={() => setShowExtensionInfo(false)} />;
-  }
-
-  if (!showApp) {
-    return <LandingPage onTryNow={() => setShowApp(true)} onGetExtension={() => setShowExtensionInfo(true)} />;
-  }
+  if (showExtensionInfo) return <ExtensionInfo onBack={() => setShowExtensionInfo(false)} />;
+  if (!showApp) return <LandingPage onTryNow={() => setShowApp(true)} onGetExtension={() => setShowExtensionInfo(true)} />;
 
   return (
-    <div className="app-container">
-      {/* Header */}
-      <header className="header glass">
-        <div className="logo-container">
-          <div className="logo-mark">S</div>
-          <h1>Shopping Buddy</h1>
+    <div className="min-h-screen relative overflow-x-hidden pt-24 pb-32" style={{backgroundColor: '#05050a', color: '#d4e4fa', fontFamily: 'Plus Jakarta Sans, sans-serif'}}>
+      
+      {/* TopAppBar */}
+      <header className="fixed top-0 w-full z-50 bg-surface/40 dark:bg-surface/40 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-indigo-500/15">
+        <div className="flex justify-between items-center px-gutter h-16 w-full max-w-container-max mx-auto">
+          <div className="flex items-center gap-4 cursor-pointer hover:bg-white/10 transition-colors p-2 rounded-full active:scale-95 transition-transform">
+            <span className="material-symbols-outlined font-headline-sm text-headline-sm" style={{color: '#d4e4fa'}} onClick={() => setShowApp(false)}>arrow_back</span>
+          </div>
+          <div className="font-display-lg-mobile text-[24px] md:text-[32px] font-extrabold bg-gradient-to-br from-primary to-tertiary bg-clip-text text-transparent">
+            Shopping Buddy
+          </div>
+          <button className="p-2 rounded-full text-primary dark:text-primary-fixed-dim hover:bg-white/10 transition-colors active:scale-95 transition-transform">
+            <span className="material-symbols-outlined font-headline-sm text-[24px]">notifications</span>
+          </button>
         </div>
       </header>
 
-      <main className="main-content">
-        <div className="workspace">
+      {/* Main Content Container */}
+      <main className="w-full max-w-container-max mx-auto px-gutter grid grid-cols-1 md:grid-cols-12 gap-6 mt-8">
+        
+        {/* Section 1: Your Style Canvas */}
+        <section className="col-span-1 md:col-span-8 glass-panel rounded-xl p-6 flex flex-col gap-6">
+          <h2 className="font-headline-md text-[32px] font-bold text-primary">Your Style Canvas</h2>
           
-          {/* Left Column: Person Setup & Action */}
-          <section className="setup-panel">
-            <div className="panel-header">
-              <h2>Your Photo</h2>
-              <p>Upload a clear front-facing photo</p>
+          <div className="w-full h-96 relative flex items-center justify-center overflow-hidden rounded-xl">
+            {status === 'generating' ? (
+              <div className="w-full h-full flex flex-col items-center justify-center glass-panel rounded-xl">
+                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-[20px] font-semibold text-white animate-pulse">{loadingPhrase}</p>
+                <p className="text-gray-400 mt-2">Powered by FASHN VTON AI</p>
+              </div>
+            ) : status === 'success' ? (
+              <div className="w-full h-full relative">
+                <img src={resultImage} className="w-full h-full object-contain" alt="Result" />
+                <button onClick={() => setStatus('idle')} className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-white hover:bg-white/20 transition">Reset</button>
+              </div>
+            ) : (
+              <label className="drag-zone w-full h-full flex flex-col items-center justify-center cursor-pointer group">
+                <input type="file" accept="image/*" onChange={handlePersonUpload} hidden />
+                {personImage ? (
+                  <img src={personImage.url} className="w-full h-full object-cover opacity-80" alt="Person" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-tertiary" style={{fontSize: '48px'}}>upload_file</span>
+                    <p className="font-body-lg text-[18px] text-on-surface mt-4">Upload your photo here</p>
+                    <p className="font-body-md text-[16px] text-on-surface-variant mt-2">High-res, full body shots work best</p>
+                  </>
+                )}
+              </label>
+            )}
+          </div>
+        </section>
+
+        {/* Section 2: AI Wardrobe & Action */}
+        <section className="col-span-1 md:col-span-4 flex flex-col gap-6">
+          <div className="glass-panel rounded-xl p-6 flex-grow flex flex-col gap-4">
+            <div className="flex justify-between items-end">
+              <h2 className="font-headline-sm text-[24px] font-semibold text-primary">AI Wardrobe</h2>
             </div>
             
-            <div className="upload-zone">
-              {personImage ? (
-                <div className="image-preview-container">
-                  <img src={personImage.url} alt="Person" className="image-preview" />
-                  <button className="clear-btn" onClick={() => setPersonImage(null)}>✕</button>
+            <div className="grid grid-cols-2 gap-4">
+              {MOCK_PRODUCTS.map((product) => (
+                <div key={product.id} className={`relative group cursor-pointer rounded-lg overflow-hidden glass-panel p-1 ${garmentImage?.url === product.image ? 'ring-2 ring-indigo-500' : ''}`} onClick={() => selectMockGarment(product)}>
+                  <img className="w-full h-32 object-cover rounded-md group-hover:scale-105 transition-transform duration-500" src={product.image} alt={product.title} />
+                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full font-label-caps text-[10px] text-white font-bold tracking-wider">{product.title.split(' ')[0]}</div>
                 </div>
-              ) : (
-                <label className="upload-label glass">
-                  <input type="file" accept="image/*" onChange={handlePersonUpload} hidden />
-                  <ImageIcon size={32} className="upload-icon" />
-                  <span>Click or drag to upload</span>
-                </label>
-              )}
+              ))}
             </div>
 
-            {/* Quality Selector */}
-            <div className="quality-selector glass" style={{ marginTop: '20px', padding: '16px', borderRadius: '12px' }}>
-              <h3 style={{ fontSize: '14px', marginBottom: '12px' }}>Inference Quality (Steps: {steps})</h3>
-              <input 
-                type="range" 
-                min="10" 
-                max="50" 
-                step="5"
-                value={steps} 
-                onChange={(e) => setSteps(Number(e.target.value))}
-                style={{ width: '100%', marginBottom: '10px' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
-                <span>Fast (10)</span>
-                <span>Balanced (15)</span>
-                <span>High (25)</span>
-                <span>Ultra (30+)</span>
-              </div>
+            {/* Quality Setting */}
+            <div className="mt-4 pt-4 border-t border-white/10">
+               <h3 className="text-[14px] text-gray-400 mb-2">Inference Quality (Steps: {steps})</h3>
+               <input type="range" min="10" max="50" step="5" value={steps} onChange={(e) => setSteps(Number(e.target.value))} className="w-full accent-indigo-500" />
             </div>
+          </div>
 
-            {/* Try On Action */}
-            <div className="action-zone glass">
-              <div className="selection-summary">
-                <div className={`summary-item ${personImage ? 'ready' : ''}`}>
-                  <div className="indicator"></div> Photo
-                </div>
-                <div className={`summary-item ${garmentImage ? 'ready' : ''}`}>
-                  <div className="indicator"></div> Garment
-                </div>
-              </div>
-              
-              <button 
-                className="try-on-btn" 
-                disabled={!personImage || !garmentImage || status === 'generating'}
-                onClick={handleTryOn}
-              >
-                {status === 'generating' ? 'Generating...' : 'Try It On'}
-              </button>
-            </div>
-          </section>
-
-          {/* Right Column: Garment Selection or Result */}
-          <section className="content-panel">
-            <AnimatePresence mode="wait">
-              
-              {status === 'generating' && (
-                <motion.div 
-                  key="generating"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="generating-view glass"
-                >
-                  <div className="immersive-loader">
-                    <div className="glow-orb"></div>
-                    <div className="glow-ring"></div>
-                    <div className="glow-ring delayed"></div>
-                    <motion.p
-                      key={loadingPhrase}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.4 }}
-                      className="loading-phrase"
-                    >
-                      {loadingPhrase}
-                    </motion.p>
-                  </div>
-                  <p className="hint">Powered by FASHN VTON 1.5</p>
-                </motion.div>
-              )}
-
-              {status === 'success' && (
-                <motion.div 
-                  key="success"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="result-view glass"
-                >
-                  <img src={resultImage} alt="Try-On Result" className="result-image" />
-                  {generationTime && (
-                    <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
-                      Generation Time: {generationTime}s (Steps: {steps})
-                    </div>
-                  )}
-                  <div className="result-actions">
-                    <button className="secondary-btn" onClick={() => setStatus('idle')}>
-                      <RefreshCw size={18} /> Try Another
-                    </button>
-                    <button className="primary-btn">
-                      <Download size={18} /> Download High-Res
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {status === 'idle' && (
-                <motion.div 
-                  key="selection"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="garment-selection"
-                >
-                  {/* Tabs */}
-                  <div className="tabs">
-                    <button 
-                      className={`tab ${activeTab === 'shop' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('shop')}
-                    >
-                      <Shirt size={18} /> Shop
-                    </button>
-                    <button 
-                      className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('upload')}
-                    >
-                      <Upload size={18} /> Upload Garment
-                    </button>
-                  </div>
-
-                  <div className="tab-content glass">
-                    {activeTab === 'shop' ? (
-                      <div className="shop-grid">
-                        {MOCK_PRODUCTS.map(product => (
-                          <div 
-                            key={product.id} 
-                            className={`product-card ${garmentImage?.url === product.image ? 'selected' : ''}`}
-                            onClick={() => selectMockGarment(product)}
-                          >
-                            <img src={product.image} alt={product.title} />
-                            <div className="product-info">
-                              <span className="title">{product.title}</span>
-                              <span className="price">{product.price}</span>
-                            </div>
-                            {garmentImage?.url === product.image && (
-                              <div className="selected-overlay">Selected</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="upload-tab">
-                        {garmentImage?.isCustom ? (
-                           <div className="image-preview-container">
-                           <img src={garmentImage.url} alt="Garment" className="image-preview" />
-                           <button className="clear-btn" onClick={() => setGarmentImage(null)}>✕</button>
-                         </div>
-                        ) : (
-                          <label className="upload-label">
-                            <input type="file" accept="image/*" onChange={handleGarmentUpload} hidden />
-                            <Upload size={48} className="upload-icon" />
-                            <span>Upload custom garment</span>
-                            <span className="subtitle">Supported: Tops, Bottoms, Dresses</span>
-                          </label>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </section>
-        </div>
+          <button 
+            disabled={!personImage || !garmentImage || status === 'generating'}
+            onClick={handleTryOn}
+            className="btn-glow w-full py-4 rounded-xl flex items-center justify-center gap-2 font-headline-sm text-[20px] font-bold text-white backdrop-blur-md hover:bg-white/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span className="material-symbols-outlined">auto_fix_high</span>
+            {status === 'generating' ? 'Generating...' : 'Try It On'}
+          </button>
+        </section>
       </main>
     </div>
   );
