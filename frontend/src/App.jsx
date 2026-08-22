@@ -10,7 +10,9 @@ const MOCK_PRODUCTS = [
   { id: 4, title: 'Leather Moto Jacket', price: '$199.00', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=500&q=80' }
 ];
 
-const API_BASE_URL = 'http://13.206.204.111:8000'; 
+// Use relative path in production (Vercel) to leverage vercel.json rewrites and avoid Mixed Content (HTTPS -> HTTP) errors.
+// Use direct IP in development.
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://13.206.204.111:8000'; 
 const FUNNY_PHRASES = ["Fitting your garment...", "Stitching the pixels...", "Ironing out the wrinkles...", "Teaching the AI fashion..."];
 
 function App() {
