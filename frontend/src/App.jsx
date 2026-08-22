@@ -99,7 +99,10 @@ function App() {
         const pollData = await pollRes.json();
         if (pollData.status === 'completed') {
           clearInterval(timer);
-          setResultImage(`${API_BASE_URL}${pollData.image_url}`);
+          // Fetch the image as a blob to avoid Mixed Content / proxy issues
+          const imgRes = await fetch(`${API_BASE_URL}${pollData.image_url}`);
+          const imgBlob = await imgRes.blob();
+          setResultImage(URL.createObjectURL(imgBlob));
           setGenerationTime(pollData.generation_time);
           setStatus('success');
           break;
