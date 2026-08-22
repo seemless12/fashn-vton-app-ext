@@ -36,6 +36,14 @@ function App() {
     }
   };
 
+  const handleGarmentUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setGarmentImage({ file, url, isCustom: true });
+    }
+  };
+
   const selectMockGarment = async (product) => {
     try {
       const response = await fetch(product.image);
@@ -172,8 +180,24 @@ function App() {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
+              {/* Custom Upload Tile */}
+              <label className="relative group cursor-pointer rounded-lg overflow-hidden glass-panel p-1 flex items-center justify-center flex-col min-h-[128px]">
+                <input type="file" accept="image/*" onChange={handleGarmentUpload} hidden />
+                {garmentImage?.isCustom ? (
+                  <div className={`w-full h-full relative ${garmentImage?.isCustom ? 'ring-2 ring-indigo-500' : ''}`}>
+                     <img src={garmentImage.url} className="w-full h-32 object-cover rounded-md" alt="Custom Garment" />
+                     <div className="absolute top-2 left-2 bg-indigo-600/80 backdrop-blur-md px-2 py-1 rounded-full font-label-caps text-[10px] text-white font-bold tracking-wider">Custom</div>
+                  </div>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-on-surface-variant font-headline-md text-[32px] group-hover:text-tertiary transition-colors">add</span>
+                    <span className="text-[12px] text-on-surface-variant mt-2">Upload Custom</span>
+                  </>
+                )}
+              </label>
+
               {MOCK_PRODUCTS.map((product) => (
-                <div key={product.id} className={`relative group cursor-pointer rounded-lg overflow-hidden glass-panel p-1 ${garmentImage?.url === product.image ? 'ring-2 ring-indigo-500' : ''}`} onClick={() => selectMockGarment(product)}>
+                <div key={product.id} className={`relative group cursor-pointer rounded-lg overflow-hidden glass-panel p-1 ${garmentImage?.url === product.image && !garmentImage?.isCustom ? 'ring-2 ring-indigo-500' : ''}`} onClick={() => selectMockGarment(product)}>
                   <img className="w-full h-32 object-cover rounded-md group-hover:scale-105 transition-transform duration-500" src={product.image} alt={product.title} />
                   <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full font-label-caps text-[10px] text-white font-bold tracking-wider">{product.title.split(' ')[0]}</div>
                 </div>
