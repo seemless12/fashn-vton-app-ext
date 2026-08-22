@@ -354,7 +354,7 @@ function startGeneration() {
         personImage: res.personImage,
         garmentImage: fashnProductData.image,
         category: document.getElementById('fashn-category').value,
-        num_timesteps: 15,
+        num_timesteps: 10,
       };
 
       chrome.runtime.sendMessage({ type: 'SUBMIT_TRYON', data: payload }, (submitRes) => {

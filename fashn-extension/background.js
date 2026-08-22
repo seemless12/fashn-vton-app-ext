@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.data.category) formData.append('category', request.data.category);
         formData.append('garment_photo_type', request.data.garment_photo_type || 'model');
         formData.append('mode', request.data.mode || 'auto');
-        formData.append('steps', steps);
+        formData.append('steps', request.data.num_timesteps || steps);
         formData.append('guidance_scale', request.data.guidance_scale || 1.5);
         formData.append('refine', request.data.refine || false);
 
