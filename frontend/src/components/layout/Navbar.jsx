@@ -21,7 +21,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Left: Logo */}
         <Link to="/" className="text-xl font-bold tracking-tight text-dark flex items-center gap-2">
-          <span className="text-primary">✦</span> Shopping Buddy
+          <img src="/logo.png" alt="Shopping Buddy" className="w-8 h-8" /> Shopping Buddy
         </Link>
 
         {/* Center: Desktop Nav */}

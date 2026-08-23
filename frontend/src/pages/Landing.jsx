@@ -58,7 +58,7 @@ export default function Landing() {
           >
             <div className="relative w-full max-w-lg mx-auto aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl bg-gray-100">
               <img 
-                src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80" 
+                src="https://www.junaidjamshed.com/cdn/shop/files/JJK-60088_3.jpg?v=1779705146&width=2000" 
                 alt="Fashion Model" 
                 className="w-full h-full object-cover object-top"
               />
