@@ -1,7 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+  ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://3.108.228.67:8000',
+        changeOrigin: true,
+      },
+      '/static': {
+        target: 'http://3.108.228.67:8000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://3.108.228.67:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })
