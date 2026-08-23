@@ -353,8 +353,7 @@ function startGeneration() {
       const payload = {
         personImage: res.personImage,
         garmentImage: fashnProductData.image,
-        category: document.getElementById('fashn-category').value,
-        num_timesteps: 10,
+        category: document.getElementById('fashn-category').value
       };
 
       chrome.runtime.sendMessage({ type: 'SUBMIT_TRYON', data: payload }, (submitRes) => {
