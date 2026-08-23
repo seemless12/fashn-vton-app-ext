@@ -12,7 +12,7 @@ const MOCK_PRODUCTS = [
 
 // Use relative path in production (Vercel) to leverage vercel.json rewrites and avoid Mixed Content (HTTPS -> HTTP) errors.
 // Use direct IP in development.
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://13.206.204.111:8000'; 
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://3.108.228.67:8000'; 
 const FUNNY_PHRASES = ["Fitting your garment...", "Stitching the pixels...", "Ironing out the wrinkles...", "Teaching the AI fashion..."];
 
 function App() {

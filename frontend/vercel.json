@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://13.206.204.111:8000/api/:path*"
+      "destination": "http://3.108.228.67:8000/api/:path*"
     },
     {
-      "source": "/results/:path*",
-      "destination": "http://13.206.204.111:8000/results/:path*"
+      "source": "/static/:path*",
+      "destination": "http://3.108.228.67:8000/static/:path*"
     },
     {
       "source": "/health",
-      "destination": "http://13.206.204.111:8000/health"
+      "destination": "http://3.108.228.67:8000/health"
     }
   ]
 }
