@@ -40,7 +40,7 @@ export default function Landing() {
             >
               <Link to="/try-on" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg shadow-xl shadow-primary/20" icon={Sparkles}>
-                  ✨ Try It On
+                   Try It On
                 </Button>
               </Link>
               <Link to="/shop" className="w-full sm:w-auto">
@@ -137,7 +137,7 @@ export default function Landing() {
           <p className="text-xl text-white/70 mb-10">Stop guessing. Start trying.</p>
           <Link to="/try-on">
             <Button size="lg" className="h-16 px-10 text-lg">
-              ✨ Try It On Now
+               Try It On Now
             </Button>
           </Link>
         </div>
