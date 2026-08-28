@@ -17,15 +17,6 @@
     </label>
   </div>
 
-  <div class="section">
-    <label for="api-url">API Server URL</label>
-    <div class="input-group">
-      <input type="text" id="api-url" placeholder="http://52.66.205.255:8000">
-      <button id="save-url-btn">Save</button>
-    </div>
-    <div id="url-status" class="status-msg"></div>
-  </div>
-
   <div class="advanced-settings-wrapper">
     <details class="advanced-settings">
       <summary>
@@ -34,6 +25,14 @@
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </summary>
+      <div class="section" style="border-bottom: 1px solid #EAEAEA; padding-bottom: 14px;">
+        <label for="api-url">API Server URL</label>
+        <div class="input-group">
+          <input type="text" id="api-url" placeholder="http://52.66.205.255:8000">
+          <button id="save-url-btn">Save</button>
+        </div>
+        <div id="url-status" class="status-msg"></div>
+      </div>
       <div class="section" style="border-bottom: none; padding-bottom: 0;">
         <label for="inference-quality">Quality · <span id="steps-value" style="color:#FF6B35;">15</span> steps</label>
         <div style="margin-top: 8px;">
