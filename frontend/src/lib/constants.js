@@ -1,5 +1,5 @@
 // Chrome Web Store URL — update when the extension is published
-export const CHROME_STORE_URL = import.meta.env.VITE_CHROME_STORE_URL || '#install-extension';
+export const CHROME_STORE_URL = import.meta.env.VITE_CHROME_STORE_URL || '/extension';
 
 // API Base URL — use env var for production, fallback for dev
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
