@@ -197,7 +197,7 @@ export default function TryOnStudio() {
           loading={genState === 'generating'}
           onClick={handleGenerate}
         >
-          {genState === 'completed' ? 'Try Another Generation' : '✨ Generate Try-On'}
+          {genState === 'completed' ? 'Try Another Generation' : 'Generate Try-On'}
         </Button>
         
         <button className="flex items-center gap-2 text-text-muted hover:text-dark transition-colors mt-6 text-sm font-medium">

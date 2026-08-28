@@ -19,15 +19,26 @@
     @apply text-text-primary bg-surface;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     line-height: 1.6;
+    overflow-x: hidden;
   }
 
   ::selection {
-    @apply bg-primary-soft text-text-primary;
+    @apply bg-primary/10 text-text-primary;
+  }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer utilities {
-  /* Scrollbar */
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
   }
@@ -35,9 +46,19 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-sm;
+    @apply bg-border rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-text-muted;
+  }
+
+  /* Text balance for headlines */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Gradient text utility */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary-deep bg-clip-text text-transparent;
   }
 }

@@ -84,7 +84,7 @@ export default function ProductDetail() {
 
             <div className="space-y-4 mb-10">
               <Button size="lg" className="w-full text-lg h-14 shadow-lg" icon={Sparkles} onClick={handleTryOn}>
-                ✨ Try It On
+                Try It On
               </Button>
               <Button size="lg" variant="secondary" className="w-full h-14" icon={ArrowRight} onClick={() => window.open(product.productUrl, '_blank')}>
                 View on Junaid Jamshed
