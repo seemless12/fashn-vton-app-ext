@@ -102,7 +102,7 @@ export default function Hero() {
             >
               <div className="aspect-square bg-gray-100 overflow-hidden relative">
                 <img 
-                  src={DEMO_PRODUCT?.image || '/placeholder-product.jpg'} 
+                  src={DEMO_PRODUCT?.tryonImage || DEMO_PRODUCT?.image || '/placeholder-product.jpg'} 
                   alt="Perfect fit" 
                   className="object-cover object-top w-full h-full scale-110"
                 />

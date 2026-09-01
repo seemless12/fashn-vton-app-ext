@@ -14,13 +14,13 @@ export default function JJDemo() {
       />
       <div className="mt-4 text-center">
         <p className="text-sm text-text-muted">
-          Example shown with J. Junaid Jamshed — Shopping Buddy is an independent platform.
+          Example shown with Outfitters — Shopping Buddy is an independent platform.
         </p>
       </div>
       
       <div className="mt-12 max-w-5xl mx-auto">
         <ScrollReveal>
-          <BrowserMockup url="junaidjamshed.com/product/premium-kameez">
+          <BrowserMockup url="outfitters.com.pk/products/ribbed-knit-sweater">
             <ProductPageMockup showTryOnButton={true} />
           </BrowserMockup>
         </ScrollReveal>

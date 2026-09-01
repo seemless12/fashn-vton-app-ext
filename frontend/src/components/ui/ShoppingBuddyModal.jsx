@@ -84,7 +84,7 @@ export default function ShoppingBuddyModal({
               
               <div className="aspect-[3/4] rounded-xl overflow-hidden bg-gray-100 mx-auto max-w-xs shadow-lg">
                 <img 
-                  src={DEMO_PRODUCT?.image || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80'} 
+                  src={DEMO_PRODUCT?.tryonImage || DEMO_PRODUCT?.image || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80'} 
                   alt="AI Try-on Result"
                   className="w-full h-full object-cover object-top"
                 />

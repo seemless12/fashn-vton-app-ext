@@ -17,11 +17,12 @@ export const NAV_LINKS = [
   { name: 'Extension', path: '/extension' },
 ];
 
-// Example product for mockups (J. Junaid Jamshed)
+// Example product for mockups
 export const DEMO_PRODUCT = {
-  name: 'Premium Kameez Shalwar',
-  brand: 'J. Junaid Jamshed',
-  price: 'PKR 6,990',
-  image: 'https://www.junaidjamshed.com/cdn/shop/files/JJK-60088_3.jpg?v=1779705146&width=2000',
-  siteUrl: 'junaidjamshed.com',
+  name: 'Ribbed Knit Sweater',
+  brand: 'Outfitters',
+  price: 'PKR 4,990',
+  image: '/demo-product.png',
+  tryonImage: '/demo-tryon.png',
+  siteUrl: 'outfitters.com.pk',
 };
