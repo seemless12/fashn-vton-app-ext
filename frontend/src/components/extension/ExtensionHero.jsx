@@ -41,10 +41,10 @@ export default function ExtensionHero() {
               Add to Chrome
             </a>
             <a 
-              href="#how-extension-works"
+              href="#developer-install"
               className="border border-border text-text-primary h-14 px-8 rounded-xl text-lg font-medium hover:bg-surface-alt inline-flex items-center justify-center gap-2 transition-colors"
             >
-              See How It Works
+              Manual Install
               <ArrowDown className="w-5 h-5" />
             </a>
           </motion.div>
