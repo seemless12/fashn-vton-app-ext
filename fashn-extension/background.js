@@ -52,6 +52,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         formData.append('guidance_scale', request.data.guidance_scale || 1.5);
         formData.append('refine', request.data.refine || false);
 
+        // Append subscription quota identifiers
+        const storage = await new Promise(r => chrome.storage.local.get(['deviceId', 'licenseKey'], r));
+        formData.append('device_id', storage.deviceId || 'dev_guest');
+        if (storage.licenseKey) formData.append('license_key', storage.licenseKey);
+
         const res = await fetch(`${apiUrl}/api/try-on`, {
           method: 'POST',
           body: formData

@@ -109,7 +109,10 @@ function openModal() {
   modal.innerHTML = `
     <div id="fashn-modal">
       <div id="fashn-modal-header">
-        <h2>Shopping Buddy</h2>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h2>Shopping Buddy</h2>
+          <span id="fashn-header-credits" class="fashn-credits-pill">3 Left</span>
+        </div>
         <button id="fashn-modal-close">&times;</button>
       </div>
       
@@ -186,6 +189,35 @@ function openModal() {
         </div>
       </div>
 
+      <!-- In-Modal Subscription Scene (PKR 500 Offer) -->
+      <div id="fashn-modal-subscription" style="display:none; padding:22px;">
+        <div class="fashn-sub-badge">PRO PACK OFFER</div>
+        <h3 class="fashn-sub-title">100 Virtual Try-Ons</h3>
+        <div class="fashn-sub-price">PKR 500 <span class="fashn-sub-price-sub">/ one-time pack</span></div>
+        
+        <ul class="fashn-sub-perks">
+          <li><span class="fashn-perk-dot"></span> 100 High-Speed Photorealistic Try-Ons</li>
+          <li><span class="fashn-perk-dot"></span> Works on any Shopify & fashion online store</li>
+          <li><span class="fashn-perk-dot"></span> 7.3s instant AI diffusion generation</li>
+          <li><span class="fashn-perk-dot"></span> 100% private local photo storage</li>
+        </ul>
+
+        <a href="https://sadabiz.co.uk" target="_blank" class="fashn-btn fashn-btn-primary" style="text-decoration:none; margin-bottom:12px; display:flex; align-items:center; justify-content:center;">
+          Get 100 Try-Ons (PKR 500)
+        </a>
+
+        <div class="fashn-redeem-box">
+          <div style="font-size:11px; font-weight:700; color:#6B7280; text-transform:uppercase; margin-bottom:6px;">Have an Activation Key?</div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="fashn-modal-key-input" placeholder="SB-500-XXXX-XXXX" style="flex:1; padding:9px 12px; border:1px solid #EAEAEA; border-radius:8px; font-size:12px; font-family:inherit; outline:none; text-transform:uppercase;" />
+            <button id="fashn-modal-key-btn" class="fashn-btn fashn-btn-secondary" style="padding:9px 14px; font-size:12px; width:auto;">Activate</button>
+          </div>
+          <div id="fashn-modal-key-status" style="font-size:11px; margin-top:6px; display:none; font-weight:600;"></div>
+        </div>
+
+        <button id="fashn-sub-back-btn" class="fashn-btn fashn-btn-secondary" style="width:100%; margin-top:14px;">Back to Fitting Room</button>
+      </div>
+
     </div>
   `;
   document.body.appendChild(modal);
@@ -202,10 +234,56 @@ function openModal() {
   const uploadBtn = document.getElementById('fashn-upload-btn');
   const personPreview = document.getElementById('fashn-person-preview');
   const personPlaceholder = document.getElementById('fashn-person-placeholder');
-  const generateBtn = document.getElementById('fashn-generate-btn');
+  const setupPanel = document.getElementById('fashn-modal-setup');
+  const subPanel = document.getElementById('fashn-modal-subscription');
+  const headerCredits = document.getElementById('fashn-header-credits');
+  const subBackBtn = document.getElementById('fashn-sub-back-btn');
+  const modalKeyInput = document.getElementById('fashn-modal-key-input');
+  const modalKeyBtn = document.getElementById('fashn-modal-key-btn');
+  const modalKeyStatus = document.getElementById('fashn-modal-key-status');
 
-  // Load existing person photo
-  chrome.storage.local.get(['personImage'], (res) => {
+  function showSubscriptionScene() {
+    setupPanel.style.display = 'none';
+    document.getElementById('fashn-modal-loading').style.display = 'none';
+    document.getElementById('fashn-modal-result').style.display = 'none';
+    subPanel.style.display = 'block';
+  }
+
+  function hideSubscriptionScene() {
+    subPanel.style.display = 'none';
+    setupPanel.style.display = 'block';
+  }
+
+  if (headerCredits) {
+    headerCredits.onclick = showSubscriptionScene;
+  }
+  if (subBackBtn) {
+    subBackBtn.onclick = hideSubscriptionScene;
+  }
+
+  // Load existing person photo and check quota
+  chrome.storage.local.get(['personImage', 'creditsRemaining'], (res) => {
+    if (res.creditsRemaining !== undefined) {
+      headerCredits.textContent = res.creditsRemaining > 0 ? `${res.creditsRemaining} Left` : '0 Left · Upgrade';
+    }
+
+    if (res.creditsRemaining !== undefined && res.creditsRemaining <= 0) {
+      const err = document.getElementById('fashn-error');
+      err.innerHTML = `
+        <div style="background:#FFF1EB; border:1px solid #FFE4DB; border-radius:8px; padding:12px; text-align:center;">
+          <div style="font-weight:700; color:#111111; margin-bottom:4px; font-size:13px;">Trial Limit Reached</div>
+          <div style="font-size:11px; color:#6B7280; margin-bottom:8px;">You have used all free try-ons. Upgrade to continue styling.</div>
+          <button id="fashn-upgrade-trigger-btn" class="fashn-btn fashn-btn-primary" style="display:inline-block; width:auto; padding:7px 14px; font-size:11px;">View PKR 500 Plan</button>
+        </div>
+      `;
+      err.style.display = 'block';
+      generateBtn.disabled = true;
+
+      const triggerBtn = document.getElementById('fashn-upgrade-trigger-btn');
+      if (triggerBtn) triggerBtn.onclick = showSubscriptionScene;
+      return;
+    }
+
     if (res.personImage) {
       personPreview.src = res.personImage;
       personPreview.style.display = 'block';
@@ -213,6 +291,54 @@ function openModal() {
       generateBtn.disabled = false;
     }
   });
+
+  // Activate license key directly from inside the product modal
+  if (modalKeyBtn && modalKeyInput) {
+    modalKeyBtn.onclick = async () => {
+      const key = modalKeyInput.value.trim().toUpperCase();
+      if (!key) return;
+
+      modalKeyStatus.textContent = 'Validating key...';
+      modalKeyStatus.style.color = '#FF6B35';
+      modalKeyStatus.style.display = 'block';
+
+      chrome.storage.local.get(['apiUrl', 'deviceId'], async (storage) => {
+        if (!storage.apiUrl) {
+          modalKeyStatus.textContent = 'Configure API Server URL in extension popup.';
+          modalKeyStatus.style.color = '#EF4444';
+          return;
+        }
+
+        try {
+          const body = new FormData();
+          body.append('license_key', key);
+          body.append('device_id', storage.deviceId || 'dev_guest');
+
+          const resp = await fetch(`${storage.apiUrl}/api/license/activate`, {
+            method: 'POST',
+            body: body
+          });
+          const data = await resp.json();
+
+          if (resp.ok && data.valid) {
+            chrome.storage.local.set({ licenseKey: key, creditsRemaining: data.credits_remaining });
+            modalKeyStatus.textContent = `Activated! ${data.credits_remaining} try-ons added.`;
+            modalKeyStatus.style.color = '#10B981';
+            headerCredits.textContent = `${data.credits_remaining} Left`;
+            generateBtn.disabled = false;
+            document.getElementById('fashn-error').style.display = 'none';
+            setTimeout(() => hideSubscriptionScene(), 1200);
+          } else {
+            modalKeyStatus.textContent = data.detail || 'Invalid or expired key.';
+            modalKeyStatus.style.color = '#EF4444';
+          }
+        } catch (e) {
+          modalKeyStatus.textContent = 'Connection error. Check API server.';
+          modalKeyStatus.style.color = '#EF4444';
+        }
+      });
+    };
+  }
 
   uploadBtn.onclick = () => fileInput.click();
   

@@ -103,6 +103,68 @@ export default function ShoppingBuddyModal({
               </div>
             </motion.div>
           )}
+
+          {stage === 'subscription' && (
+            <motion.div
+              key="subscription"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-6 sm:p-8"
+            >
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-tint border border-primary-soft text-primary text-xs font-bold uppercase tracking-wider mb-3">
+                Pro Pack Offer
+              </div>
+              <h3 className="text-2xl font-extrabold text-dark tracking-tight">100 Virtual Try-Ons</h3>
+              <div className="text-3xl font-black text-primary mt-1 mb-6">
+                PKR 500 <span className="text-sm font-medium text-text-muted">/ one-time pack</span>
+              </div>
+
+              <div className="space-y-3 border-y border-border py-4 mb-6">
+                <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                  <span>100 High-Speed Photorealistic Try-Ons</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                  <span>Works on Shopify, Junaid Jamshed & all fashion stores</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                  <span>7.3s instant AI diffusion generation speed</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                  <span>100% private: selfies remain strictly in local browser</span>
+                </div>
+              </div>
+
+              <motion.a
+                href="https://sadabiz.co.uk"
+                target="_blank"
+                rel="noreferrer"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="w-full h-12 bg-primary text-white rounded-xl font-bold flex items-center justify-center text-sm shadow-md shadow-primary/20 hover:bg-primary-deep transition-colors mb-4 text-center"
+              >
+                Get 100 Try-Ons (PKR 500)
+              </motion.a>
+
+              <div className="p-4 rounded-xl bg-surface-alt border border-border">
+                <div className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Have an Activation Key?</div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="SB-500-XXXX-XXXX"
+                    className="flex-1 bg-white border border-border rounded-lg px-3 py-2 text-xs font-mono uppercase focus:outline-none focus:border-primary"
+                  />
+                  <button className="bg-dark text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-black transition-colors">
+                    Activate
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 

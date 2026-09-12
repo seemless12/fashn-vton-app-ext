@@ -96,4 +96,111 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     reader.readAsDataURL(file);
   });
+
+  // --- Subscription & Quota Logic (PKR 500 Offer) ---
+  const planBadge = document.getElementById('plan-badge');
+  const creditsCount = document.getElementById('credits-count');
+  const creditsBar = document.getElementById('credits-bar');
+  const toggleLicenseBtn = document.getElementById('toggle-license-btn');
+  const licenseWrapper = document.getElementById('license-input-wrapper');
+  const activateKeyBtn = document.getElementById('activate-key-btn');
+  const licenseKeyInput = document.getElementById('license-key-input');
+  const licenseStatus = document.getElementById('license-status');
+
+  function getOrCreateDeviceId() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['deviceId'], (res) => {
+        if (res.deviceId) {
+          resolve(res.deviceId);
+        } else {
+          const newId = 'dev_' + Math.random().toString(36).substring(2, 12);
+          chrome.storage.local.set({ deviceId: newId }, () => resolve(newId));
+        }
+      });
+    });
+  }
+
+  async function syncSubscription() {
+    const deviceId = await getOrCreateDeviceId();
+    chrome.storage.local.get(['apiUrl', 'licenseKey'], async (res) => {
+      if (!res.apiUrl) return;
+      try {
+        const query = new URLSearchParams({ device_id: deviceId });
+        if (res.licenseKey) query.append('license_key', res.licenseKey);
+
+        const resp = await fetch(`${res.apiUrl}/api/credits/check?${query.toString()}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        if (planBadge && creditsCount && creditsBar) {
+          planBadge.textContent = data.type === 'paid' ? 'PRO PACK' : 'FREE TRIAL';
+          creditsCount.textContent = `${data.credits_remaining} / ${data.credits_total} Left`;
+          const pct = Math.max(0, Math.min(100, (data.credits_remaining / data.credits_total) * 100));
+          creditsBar.style.width = `${pct}%`;
+          chrome.storage.local.set({ creditsRemaining: data.credits_remaining });
+        }
+      } catch (err) {
+        console.warn('Subscription sync error:', err);
+      }
+    });
+  }
+
+  if (toggleLicenseBtn && licenseWrapper) {
+    toggleLicenseBtn.addEventListener('click', () => {
+      const isHidden = licenseWrapper.style.display === 'none';
+      licenseWrapper.style.display = isHidden ? 'block' : 'none';
+      if (isHidden && licenseKeyInput) licenseKeyInput.focus();
+    });
+  }
+
+  if (activateKeyBtn && licenseKeyInput) {
+    activateKeyBtn.addEventListener('click', async () => {
+      const key = licenseKeyInput.value.trim().toUpperCase();
+      if (!key) {
+        licenseStatus.textContent = 'Please enter a key.';
+        licenseStatus.className = 'status-msg error';
+        return;
+      }
+
+      licenseStatus.textContent = 'Validating key...';
+      licenseStatus.className = 'status-msg';
+
+      const deviceId = await getOrCreateDeviceId();
+      chrome.storage.local.get(['apiUrl'], async (res) => {
+        if (!res.apiUrl) {
+          licenseStatus.textContent = 'Set API Server URL first.';
+          licenseStatus.className = 'status-msg error';
+          return;
+        }
+
+        try {
+          const body = new FormData();
+          body.append('license_key', key);
+          body.append('device_id', deviceId);
+
+          const resp = await fetch(`${res.apiUrl}/api/license/activate`, {
+            method: 'POST',
+            body: body
+          });
+          const data = await resp.json();
+
+          if (resp.ok && data.valid) {
+            chrome.storage.local.set({ licenseKey: key });
+            licenseStatus.textContent = `Activated! ${data.credits_remaining} try-ons unlocked.`;
+            licenseStatus.className = 'status-msg success';
+            syncSubscription();
+          } else {
+            licenseStatus.textContent = data.detail || 'Invalid or expired key.';
+            licenseStatus.className = 'status-msg error';
+          }
+        } catch (e) {
+          licenseStatus.textContent = 'Connection failed. Check server.';
+          licenseStatus.className = 'status-msg error';
+        }
+      });
+    });
+  }
+
+  // Initial sync
+  syncSubscription();
 });

@@ -442,3 +442,92 @@
 .fashn-result-actions button {
   flex: 1;
 }
+
+/* --- In-Modal Subscription Scene (PKR 500 Offer) --- */
+.fashn-credits-pill {
+  background: #FFF1EB;
+  color: #FF6B35;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid #FFE4DB;
+  transition: all 0.2s;
+}
+
+.fashn-credits-pill:hover {
+  background: #FF6B35;
+  color: #FFFFFF;
+}
+
+.fashn-sub-badge {
+  display: inline-block;
+  background: #FFF1EB;
+  color: #FF6B35;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+
+.fashn-sub-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 6px 0;
+}
+
+.fashn-sub-price {
+  font-size: 24px;
+  font-weight: 800;
+  color: #FF6B35;
+  margin-bottom: 16px;
+}
+
+.fashn-sub-price-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.fashn-sub-perks {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  border-top: 1px solid #EAEAEA;
+  border-bottom: 1px solid #EAEAEA;
+  padding: 14px 0;
+}
+
+.fashn-sub-perks li {
+  font-size: 12px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.fashn-sub-perks li:last-child {
+  margin-bottom: 0;
+}
+
+.fashn-perk-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF6B35;
+  flex-shrink: 0;
+}
+
+.fashn-redeem-box {
+  background: #FAFAFA;
+  border: 1px solid #EAEAEA;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
