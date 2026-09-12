@@ -15,7 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load existing settings
   chrome.storage.local.get(['apiUrl', 'extensionEnabled', 'personImage', 'steps'], (res) => {
-    if (res.apiUrl) urlInput.value = res.apiUrl;
+    const defaultApiUrl = "http://20.187.120.80:8000";
+    if (res.apiUrl) {
+      urlInput.value = res.apiUrl;
+    } else {
+      urlInput.value = defaultApiUrl;
+      chrome.storage.local.set({ apiUrl: defaultApiUrl });
+    }
     if (res.extensionEnabled !== undefined) toggle.checked = res.extensionEnabled;
     if (res.steps !== undefined) {
       qualityInput.value = res.steps;

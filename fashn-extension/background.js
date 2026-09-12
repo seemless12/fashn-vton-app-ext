@@ -2,7 +2,7 @@
 async function getApiUrl() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['apiUrl', 'steps'], (result) => {
-      resolve({ apiUrl: result.apiUrl || null, steps: result.steps || 15 });
+      resolve({ apiUrl: result.apiUrl || 'http://20.187.120.80:8000', steps: result.steps || 15 });
     });
   });
 }

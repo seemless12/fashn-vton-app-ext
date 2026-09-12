@@ -8,15 +8,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://3.108.228.67:8000',
+        target: 'http://20.187.120.80:8000',
         changeOrigin: true,
       },
       '/static': {
-        target: 'http://3.108.228.67:8000',
+        target: 'http://20.187.120.80:8000',
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://3.108.228.67:8000',
+        target: 'http://20.187.120.80:8000',
         changeOrigin: true,
       },
     },
