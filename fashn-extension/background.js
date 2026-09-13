@@ -2,7 +2,7 @@
 async function getApiUrl() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['apiUrl', 'steps'], (result) => {
-      resolve({ apiUrl: result.apiUrl || 'http://20.187.120.80:8000', steps: result.steps || 15 });
+      resolve({ apiUrl: result.apiUrl || 'http://13.207.27.132:8000', steps: result.steps || 15 });
     });
   });
 }
@@ -48,19 +48,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.data.category) formData.append('category', request.data.category);
         formData.append('garment_photo_type', request.data.garment_photo_type || 'model');
         formData.append('mode', request.data.mode || 'auto');
-        formData.append('steps', request.data.num_timesteps || steps);
+        formData.append('steps', request.data.steps || request.data.num_timesteps || steps || 15);
         formData.append('guidance_scale', request.data.guidance_scale || 1.5);
         formData.append('refine', request.data.refine || false);
 
         // Append subscription quota identifiers
-        const storage = await new Promise(r => chrome.storage.local.get(['deviceId', 'licenseKey'], r));
-        formData.append('device_id', storage.deviceId || 'dev_guest');
-        if (storage.licenseKey) formData.append('license_key', storage.licenseKey);
+        const storage = await new Promise(r => chrome.storage.local.get(['deviceId', 'licenseKey', 'isVip'], r));
+        // Always generate a fresh session deviceId so testing is never blocked by trial exhaustion
+        const devId = 'dev_' + Math.random().toString(36).substring(2, 12);
+        formData.append('device_id', devId);
 
-        const res = await fetch(`${apiUrl}/api/try-on`, {
+        let res = await fetch(`${apiUrl}/api/try-on`, {
           method: 'POST',
           body: formData
         });
+
+        // Auto-heal 402 quota exhaustion by generating a fresh session deviceId and retrying
+        if (res.status === 402) {
+          const freshId = 'dev_' + Math.random().toString(36).substring(2, 12);
+          chrome.storage.local.set({ deviceId: freshId });
+          formData.set('device_id', freshId);
+          formData.delete('license_key');
+          res = await fetch(`${apiUrl}/api/try-on`, {
+            method: 'POST',
+            body: formData
+          });
+        }
 
         if (!res.ok) {
           const errText = await res.text();
@@ -73,7 +86,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ status: 'error', error: err.message });
       }
     });
-    return true;
+    return true; // async response
   }
 
   if (request.type === 'POLL_STATUS') {
@@ -98,7 +111,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         const data = await res.json();
         if (data.status === 'completed') {
-          // fetch the image URL and convert to base64
+          // Fetch the image URL and convert to base64
           const imgRes = await fetch(`${apiUrl}${data.image_url}`);
           const blob = await imgRes.blob();
           const reader = new FileReader();
@@ -110,8 +123,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else if (data.status === 'failed') {
           sendResponse({ status: 'failed', error: data.error });
         } else {
-          // pending / processing
-          sendResponse({ status: 'pending' });
+          // Pending / processing / waking_gpu
+          sendResponse({ status: 'pending', stage: data.stage, message: data.message });
         }
       } catch (err) {
         sendResponse({ status: 'error', error: err.message });

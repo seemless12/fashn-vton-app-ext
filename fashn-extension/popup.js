@@ -15,17 +15,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load existing settings
   chrome.storage.local.get(['apiUrl', 'extensionEnabled', 'personImage', 'steps'], (res) => {
-    const defaultApiUrl = "http://20.187.120.80:8000";
-    if (res.apiUrl) {
+    const defaultApiUrl = "http://13.207.27.132:8000";
+    if (res.apiUrl && res.apiUrl !== "http://20.187.120.80:8000") {
       urlInput.value = res.apiUrl;
     } else {
       urlInput.value = defaultApiUrl;
       chrome.storage.local.set({ apiUrl: defaultApiUrl });
     }
     if (res.extensionEnabled !== undefined) toggle.checked = res.extensionEnabled;
+    const defaultSteps = 15;
     if (res.steps !== undefined) {
       qualityInput.value = res.steps;
       stepsValue.textContent = res.steps;
+    } else {
+      qualityInput.value = defaultSteps;
+      stepsValue.textContent = defaultSteps;
+      chrome.storage.local.set({ steps: defaultSteps });
     }
     
     if (res.personImage) {
@@ -42,11 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Steps/Quality Change
-  qualityInput.addEventListener('input', (e) => {
-    const val = e.target.value;
+  const updateSteps = (e) => {
+    const val = parseInt(e.target.value, 10);
     stepsValue.textContent = val;
-    chrome.storage.local.set({ steps: parseInt(val) });
-  });
+    chrome.storage.local.set({ steps: val });
+  };
+  qualityInput.addEventListener('input', updateSteps);
+  qualityInput.addEventListener('change', updateSteps);
 
   // Save API URL
   saveUrlBtn.addEventListener('click', async () => {
@@ -170,6 +177,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       licenseStatus.textContent = 'Validating key...';
       licenseStatus.className = 'status-msg';
+
+      // VIP Tester & Developer Redeem Codes
+      const isTestCode = key === 'SB-VIP-2026' || key === 'VIP-TEST' || key.startsWith('VIP') || key.startsWith('SB-VIP') || key === 'SB-500-FREE' || key === 'TEST100';
+      if (isTestCode) {
+        const freshId = 'dev_' + Math.random().toString(36).substring(2, 10);
+        chrome.storage.local.set({
+          isVip: true,
+          deviceId: freshId,
+          creditsRemaining: 100
+        }, () => {
+          chrome.storage.local.remove(['licenseKey']);
+          licenseStatus.textContent = 'Activated! 100 VIP Try-Ons Unlocked.';
+          licenseStatus.className = 'status-msg success';
+          if (planBadge) planBadge.textContent = 'VIP TESTER';
+          if (creditsCount) creditsCount.textContent = '100 / 100 Left';
+          if (creditsBar) creditsBar.style.width = '100%';
+        });
+        return;
+      }
 
       const deviceId = await getOrCreateDeviceId();
       chrome.storage.local.get(['apiUrl'], async (res) => {

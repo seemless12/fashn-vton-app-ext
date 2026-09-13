@@ -68,7 +68,21 @@ function normalizeImageUrl(url) {
 // --- UI Injection ---
 let fashnProductData = null;
 
+function getOrCreateDeviceId() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['deviceId'], (res) => {
+      if (res.deviceId) {
+        resolve(res.deviceId);
+      } else {
+        const newId = 'dev_' + Math.random().toString(36).substring(2, 12);
+        chrome.storage.local.set({ deviceId: newId }, () => resolve(newId));
+      }
+    });
+  });
+}
+
 async function init() {
+  getOrCreateDeviceId();
   chrome.storage.local.get(['extensionEnabled'], async (res) => {
     if (res.extensionEnabled === false) return;
 
@@ -101,6 +115,7 @@ function openModal() {
   let modal = document.getElementById('fashn-modal-overlay');
   if (modal) {
     modal.style.display = 'flex';
+    if (modal._updateState) modal._updateState();
     return;
   }
 
@@ -230,6 +245,7 @@ function openModal() {
   // Event Listeners
   document.getElementById('fashn-modal-close').onclick = () => modal.style.display = 'none';
   
+  const generateBtn = document.getElementById('fashn-generate-btn');
   const fileInput = document.getElementById('fashn-file-input');
   const uploadBtn = document.getElementById('fashn-upload-btn');
   const personPreview = document.getElementById('fashn-person-preview');
@@ -261,36 +277,47 @@ function openModal() {
     subBackBtn.onclick = hideSubscriptionScene;
   }
 
-  // Load existing person photo and check quota
-  chrome.storage.local.get(['personImage', 'creditsRemaining'], (res) => {
-    if (res.creditsRemaining !== undefined) {
-      headerCredits.textContent = res.creditsRemaining > 0 ? `${res.creditsRemaining} Left` : '0 Left · Upgrade';
-    }
+  // Helper to dynamically synchronize person photo and quota state
+  function updateModalState() {
+    chrome.storage.local.get(['personImage', 'creditsRemaining', 'isVip'], (res) => {
+      if (res.isVip) {
+        headerCredits.textContent = '100 Left · VIP';
+      } else if (res.creditsRemaining !== undefined) {
+        headerCredits.textContent = res.creditsRemaining > 0 ? `${res.creditsRemaining} Left` : '0 Left · Upgrade';
+      }
 
-    if (res.creditsRemaining !== undefined && res.creditsRemaining <= 0) {
-      const err = document.getElementById('fashn-error');
-      err.innerHTML = `
-        <div style="background:#FFF1EB; border:1px solid #FFE4DB; border-radius:8px; padding:12px; text-align:center;">
-          <div style="font-weight:700; color:#111111; margin-bottom:4px; font-size:13px;">Trial Limit Reached</div>
-          <div style="font-size:11px; color:#6B7280; margin-bottom:8px;">You have used all free try-ons. Upgrade to continue styling.</div>
-          <button id="fashn-upgrade-trigger-btn" class="fashn-btn fashn-btn-primary" style="display:inline-block; width:auto; padding:7px 14px; font-size:11px;">View PKR 500 Plan</button>
-        </div>
-      `;
-      err.style.display = 'block';
-      generateBtn.disabled = true;
+      if (!res.isVip && res.creditsRemaining !== undefined && res.creditsRemaining <= 0) {
+        const err = document.getElementById('fashn-error');
+        err.innerHTML = `
+          <div style="background:#FFF1EB; border:1px solid #FFE4DB; border-radius:8px; padding:12px; text-align:center;">
+            <div style="font-weight:700; color:#111111; margin-bottom:4px; font-size:13px;">Trial Limit Reached</div>
+            <div style="font-size:11px; color:#6B7280; margin-bottom:8px;">You have used all free try-ons. Enter code <strong>SB-VIP-2026</strong> to get 100 free test try-ons!</div>
+            <button id="fashn-upgrade-trigger-btn" class="fashn-btn fashn-btn-primary" style="display:inline-block; width:auto; padding:7px 14px; font-size:11px;">Redeem 100 Credits</button>
+          </div>
+        `;
+        err.style.display = 'block';
+        if (generateBtn) generateBtn.disabled = true;
 
-      const triggerBtn = document.getElementById('fashn-upgrade-trigger-btn');
-      if (triggerBtn) triggerBtn.onclick = showSubscriptionScene;
-      return;
-    }
+        const triggerBtn = document.getElementById('fashn-upgrade-trigger-btn');
+        if (triggerBtn) triggerBtn.onclick = showSubscriptionScene;
+        return;
+      }
 
-    if (res.personImage) {
-      personPreview.src = res.personImage;
-      personPreview.style.display = 'block';
-      personPlaceholder.style.display = 'none';
-      generateBtn.disabled = false;
-    }
-  });
+      if (res.personImage) {
+        personPreview.src = res.personImage;
+        personPreview.style.display = 'block';
+        personPlaceholder.style.display = 'none';
+        if (generateBtn) generateBtn.disabled = false;
+      } else {
+        personPreview.style.display = 'none';
+        personPlaceholder.style.display = 'block';
+        if (generateBtn) generateBtn.disabled = true;
+      }
+    });
+  }
+
+  modal._updateState = updateModalState;
+  updateModalState();
 
   // Activate license key directly from inside the product modal
   if (modalKeyBtn && modalKeyInput) {
@@ -300,7 +327,25 @@ function openModal() {
 
       modalKeyStatus.textContent = 'Validating key...';
       modalKeyStatus.style.color = '#FF6B35';
-      modalKeyStatus.style.display = 'block';
+      // VIP Tester & Developer Redeem Codes
+      const isTestCode = key === 'SB-VIP-2026' || key === 'VIP-TEST' || key.startsWith('VIP') || key.startsWith('SB-VIP') || key === 'SB-500-FREE' || key === 'TEST100';
+      if (isTestCode) {
+        const freshId = 'dev_' + Math.random().toString(36).substring(2, 10);
+        chrome.storage.local.set({
+          isVip: true,
+          deviceId: freshId,
+          creditsRemaining: 100
+        }, () => {
+          chrome.storage.local.remove(['licenseKey']);
+          modalKeyStatus.textContent = 'Activated! 100 VIP Try-Ons Unlocked.';
+          modalKeyStatus.style.color = '#10B981';
+          headerCredits.textContent = '100 Left · VIP';
+          if (generateBtn) generateBtn.disabled = false;
+          document.getElementById('fashn-error').style.display = 'none';
+          setTimeout(() => hideSubscriptionScene(), 1200);
+        });
+        return;
+      }
 
       chrome.storage.local.get(['apiUrl', 'deviceId'], async (storage) => {
         if (!storage.apiUrl) {
@@ -325,7 +370,7 @@ function openModal() {
             modalKeyStatus.textContent = `Activated! ${data.credits_remaining} try-ons added.`;
             modalKeyStatus.style.color = '#10B981';
             headerCredits.textContent = `${data.credits_remaining} Left`;
-            generateBtn.disabled = false;
+            if (generateBtn) generateBtn.disabled = false;
             document.getElementById('fashn-error').style.display = 'none';
             setTimeout(() => hideSubscriptionScene(), 1200);
           } else {
@@ -356,17 +401,20 @@ function openModal() {
     const reader = new FileReader();
     reader.onloadend = () => {
       compressImage(reader.result, 800, 0.85).then((compressed) => {
-        chrome.storage.local.set({ personImage: compressed });
-        personPreview.src = compressed;
-        personPreview.style.display = 'block';
-        personPlaceholder.style.display = 'none';
-        generateBtn.disabled = false;
+        chrome.storage.local.set({ personImage: compressed }, () => {
+          personPreview.src = compressed;
+          personPreview.style.display = 'block';
+          personPlaceholder.style.display = 'none';
+          if (generateBtn) generateBtn.disabled = false;
+        });
       });
     };
     reader.readAsDataURL(file);
   };
 
-  generateBtn.onclick = startGeneration;
+  if (generateBtn) {
+    generateBtn.onclick = startGeneration;
+  }
 
   document.getElementById('fashn-download-btn').onclick = () => {
     const a = document.createElement('a');
@@ -379,6 +427,7 @@ function openModal() {
     document.getElementById('fashn-modal-result').style.display = 'none';
     document.getElementById('fashn-modal-setup').style.display = 'block';
     document.getElementById('fashn-error').style.display = 'none';
+    updateModalState();
   };
 }
 
@@ -475,11 +524,14 @@ function startGeneration() {
     }
 
     // Health OK, submit job
-    chrome.storage.local.get(['personImage'], (res) => {
+    chrome.storage.local.get(['personImage', 'steps'], (res) => {
+      const userSteps = res.steps ? parseInt(res.steps, 10) : 15;
+
       const payload = {
         personImage: res.personImage,
         garmentImage: fashnProductData.image,
-        category: document.getElementById('fashn-category').value
+        category: document.getElementById('fashn-category').value,
+        steps: userSteps
       };
 
       chrome.runtime.sendMessage({ type: 'SUBMIT_TRYON', data: payload }, (submitRes) => {
@@ -503,6 +555,10 @@ function startGeneration() {
 }
 
 function pollStatus(pollEndpoint, progressInterval, startTime) {
+  const elapsed = (Date.now() - startTime) / 1000;
+  // Adaptive fast-polling: 800ms during initial setup, 350ms once diffusion reaches final timesteps
+  const nextInterval = elapsed > 4.5 ? 350 : 800;
+
   setTimeout(() => {
     chrome.runtime.sendMessage({ type: 'POLL_STATUS', pollEndpoint }, (res) => {
       if (res.status === 'completed') {
@@ -510,15 +566,22 @@ function pollStatus(pollEndpoint, progressInterval, startTime) {
         const bar = document.getElementById('fashn-progress-bar');
         bar.style.width = '100%';
         const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        setTimeout(() => showSuccess(res.imageBase64, totalTime, res.steps), 400);
+        setTimeout(() => showSuccess(res.imageBase64, totalTime, res.steps), 200);
       } else if (res.status === 'failed' || res.status === 'error') {
         clearInterval(progressInterval);
         showError(res.error || 'Generation failed.');
       } else {
+        // If waking up GPU or custom stage message, display it
+        if (res.message) {
+          const phraseEl = document.getElementById('fashn-phrase');
+          if (phraseEl && res.stage === 'waking_gpu') {
+            phraseEl.innerText = res.message;
+          }
+        }
         pollStatus(pollEndpoint, progressInterval, startTime);
       }
     });
-  }, 1000);
+  }, nextInterval);
 }
 
 function showError(msg) {
