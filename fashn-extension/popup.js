@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load existing settings
   chrome.storage.local.get(['apiUrl', 'extensionEnabled', 'personImage', 'steps'], (res) => {
-    const defaultApiUrl = "http://13.207.27.132:8000";
-    if (res.apiUrl && res.apiUrl !== "http://20.187.120.80:8000") {
+    const defaultApiUrl = "http://20.187.120.80:8000";
+    if (res.apiUrl) {
       urlInput.value = res.apiUrl;
     } else {
       urlInput.value = defaultApiUrl;

@@ -148,12 +148,29 @@ function openModal() {
         </div>
 
         <div class="fashn-controls">
-          <label for="fashn-category">Category (Optional)</label>
+          <label for="fashn-category" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Outfit Type</span>
+            <span id="fashn-category-badge" style="display:none; font-size:10px; background:#FFF1EB; color:#FF6B35; font-weight:700; padding:2px 6px; border-radius:4px;">✨ Full Outfit Detected</span>
+          </label>
           <select id="fashn-category">
-            <option value="">Auto-detect</option>
-            <option value="tops">Tops / T-Shirts</option>
-            <option value="one-pieces">Dresses / One-Pieces</option>
-            <option value="bottoms">Bottoms / Pants</option>
+            <option value="">Auto-detect (Smart)</option>
+            <option value="one-pieces">Full Dress / Kurta Pajama / Suits (Both Top & Bottom)</option>
+            <option value="tops">Tops Only (Kurta / Shirt / T-Shirt)</option>
+            <option value="bottoms">Bottoms Only (Pajama / Shalwar / Pants)</option>
+          </select>
+        </div>
+
+        <div class="fashn-controls" style="margin-top:10px;">
+          <label for="fashn-steps-select" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Quality & Speed</span>
+            <span id="fashn-steps-badge" style="font-size:10px; background:#F3F4F6; color:#374151; font-weight:700; padding:2px 6px; border-radius:4px;">15 steps</span>
+          </label>
+          <select id="fashn-steps-select">
+            <option value="8">⚡ Lightning (8 steps) · ~18s</option>
+            <option value="10" selected>⚡ Fast (10 steps) · ~24s</option>
+            <option value="15">⚖️ Balanced (15 steps) · ~35s</option>
+            <option value="25">💎 High Quality (25 steps)</option>
+            <option value="50">🔥 Ultra Detail (50 steps)</option>
           </select>
         </div>
 
@@ -279,7 +296,30 @@ function openModal() {
 
   // Helper to dynamically synchronize person photo and quota state
   function updateModalState() {
-    chrome.storage.local.get(['personImage', 'creditsRemaining', 'isVip'], (res) => {
+    // 1. Smart Outfit auto-detection based on Shopify product title
+    if (fashnProductData && fashnProductData.title) {
+      const title = fashnProductData.title.toLowerCase();
+      const isFullOutfit = /kurta.*pajam|pajam.*kurta|shalwar.*kameez|kameez.*shalwar|suit|2pc|2-pc|2\s*piece|sherwani|jodhpuri|co-ord|dress|gown|maxi|set/i.test(title);
+      const catSelect = document.getElementById('fashn-category');
+      const catBadge = document.getElementById('fashn-category-badge');
+      if (catSelect && isFullOutfit && !catSelect.dataset.userModified) {
+        catSelect.value = 'one-pieces';
+        if (catBadge) {
+          catBadge.textContent = '✨ Full Outfit Detected';
+          catBadge.style.display = 'inline-block';
+        }
+      }
+    }
+
+    // 2. Sync steps with local storage
+    chrome.storage.local.get(['personImage', 'creditsRemaining', 'isVip', 'steps'], (res) => {
+      const stepsSelect = document.getElementById('fashn-steps-select');
+      const stepsBadge = document.getElementById('fashn-steps-badge');
+      if (stepsSelect && res.steps) {
+        stepsSelect.value = String(res.steps);
+        if (stepsBadge) stepsBadge.textContent = `${res.steps} steps`;
+      }
+
       if (res.isVip) {
         headerCredits.textContent = '100 Left · VIP';
       } else if (res.creditsRemaining !== undefined) {
@@ -314,6 +354,26 @@ function openModal() {
         if (generateBtn) generateBtn.disabled = true;
       }
     });
+  }
+
+  // Hook controls change listeners
+  const catSelectEl = document.getElementById('fashn-category');
+  if (catSelectEl) {
+    catSelectEl.onchange = () => {
+      catSelectEl.dataset.userModified = "true";
+      const catBadge = document.getElementById('fashn-category-badge');
+      if (catBadge) catBadge.style.display = 'none';
+    };
+  }
+
+  const stepsSelectEl = document.getElementById('fashn-steps-select');
+  const stepsBadgeEl = document.getElementById('fashn-steps-badge');
+  if (stepsSelectEl) {
+    stepsSelectEl.onchange = (e) => {
+      const val = parseInt(e.target.value, 10);
+      if (stepsBadgeEl) stepsBadgeEl.textContent = `${val} steps`;
+      chrome.storage.local.set({ steps: val });
+    };
   }
 
   modal._updateState = updateModalState;
@@ -432,22 +492,30 @@ function openModal() {
 }
 
 // --- Image Compression ---
-function compressImage(dataUrl, maxDim, quality) {
+function compressImage(dataUrl, maxDim = 800, quality = 0.85) {
   return new Promise((resolve) => {
+    if (!dataUrl) return resolve(dataUrl);
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
-      let w = img.width, h = img.height;
-      if (w > maxDim || h > maxDim) {
-        const ratio = Math.min(maxDim / w, maxDim / h);
-        w = Math.round(w * ratio);
-        h = Math.round(h * ratio);
+      try {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } catch (err) {
+        resolve(dataUrl);
       }
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', quality));
     };
+    img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
   });
 }
@@ -524,14 +592,23 @@ function startGeneration() {
     }
 
     // Health OK, submit job
-    chrome.storage.local.get(['personImage', 'steps'], (res) => {
-      const userSteps = res.steps ? parseInt(res.steps, 10) : 15;
+    chrome.storage.local.get(['personImage', 'steps'], async (res) => {
+      const selectSteps = document.getElementById('fashn-steps-select');
+      const userSteps = selectSteps ? parseInt(selectSteps.value, 10) : (res.steps ? parseInt(res.steps, 10) : 10);
+      const randomSeed = Math.floor(Math.random() * 900000) + 100000;
+
+      // Pre-compress garment image to save 8-10s of upload bandwidth
+      let garmentPayload = fashnProductData.image;
+      try {
+        garmentPayload = await compressImage(fashnProductData.image, 800, 0.85);
+      } catch (e) {}
 
       const payload = {
         personImage: res.personImage,
-        garmentImage: fashnProductData.image,
+        garmentImage: garmentPayload,
         category: document.getElementById('fashn-category').value,
-        steps: userSteps
+        steps: userSteps,
+        seed: randomSeed
       };
 
       chrome.runtime.sendMessage({ type: 'SUBMIT_TRYON', data: payload }, (submitRes) => {
@@ -566,7 +643,7 @@ function pollStatus(pollEndpoint, progressInterval, startTime) {
         const bar = document.getElementById('fashn-progress-bar');
         bar.style.width = '100%';
         const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        setTimeout(() => showSuccess(res.imageBase64, totalTime, res.steps), 200);
+        setTimeout(() => showSuccess(res.imageBase64, totalTime, res.steps, res.generation_time), 200);
       } else if (res.status === 'failed' || res.status === 'error') {
         clearInterval(progressInterval);
         showError(res.error || 'Generation failed.');
@@ -594,7 +671,7 @@ function showError(msg) {
   err.style.display = 'block';
 }
 
-function showSuccess(imgB64, totalTime, steps) {
+function showSuccess(imgB64, totalTime, steps, genTime) {
   clearInterval(timerInterval);
   clearInterval(elapsedTimer);
   document.getElementById('fashn-modal-loading').style.display = 'none';
@@ -608,10 +685,11 @@ function showSuccess(imgB64, totalTime, steps) {
     }
   });
 
-  // Show generation stats
+  // Show generation stats (displays pure GPU compute time when available, plus total roundtrip)
   const statsEl = document.getElementById('fashn-gen-stats');
   if (totalTime) {
-    statsEl.innerHTML = `Generated in <strong>${totalTime}s</strong>${steps ? ` · ${steps} steps` : ''}`;
+    const timeDisplay = genTime ? `${genTime}s (GPU)` : `${totalTime}s`;
+    statsEl.innerHTML = `Generated in <strong>${timeDisplay}</strong>${steps ? ` · ${steps} steps` : ''}`;
     statsEl.style.display = 'block';
   }
 }

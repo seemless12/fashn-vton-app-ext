@@ -2,7 +2,7 @@
 async function getApiUrl() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['apiUrl', 'steps'], (result) => {
-      resolve({ apiUrl: result.apiUrl || 'http://13.207.27.132:8000', steps: result.steps || 15 });
+      resolve({ apiUrl: result.apiUrl || 'http://20.187.120.80:8000', steps: result.steps || 15 });
     });
   });
 }
@@ -51,6 +51,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         formData.append('steps', request.data.steps || request.data.num_timesteps || steps || 15);
         formData.append('guidance_scale', request.data.guidance_scale || 1.5);
         formData.append('refine', request.data.refine || false);
+        if (request.data.seed) formData.append('seed', request.data.seed);
 
         // Append subscription quota identifiers
         const storage = await new Promise(r => chrome.storage.local.get(['deviceId', 'licenseKey', 'isVip'], r));
