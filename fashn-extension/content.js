@@ -163,11 +163,13 @@ function openModal() {
         <div class="fashn-controls" style="margin-top:10px;">
           <label for="fashn-steps-select" style="display:flex; justify-content:space-between; align-items:center;">
             <span>Quality & Speed</span>
-            <span id="fashn-steps-badge" style="font-size:10px; background:#F3F4F6; color:#374151; font-weight:700; padding:2px 6px; border-radius:4px;">15 steps</span>
+            <span id="fashn-steps-badge" style="font-size:10px; background:#DCFCE7; color:#166534; font-weight:700; padding:2px 6px; border-radius:4px;">6 steps · 15s</span>
           </label>
           <select id="fashn-steps-select">
+            <option value="6" selected>⚡ Turbo (6 steps) · ~15s (Recommended)</option>
+            <option value="7">⚡ Ultra (7 steps) · ~16s</option>
             <option value="8">⚡ Lightning (8 steps) · ~18s</option>
-            <option value="10" selected>⚡ Fast (10 steps) · ~24s</option>
+            <option value="10">⚡ Fast (10 steps) · ~24s</option>
             <option value="15">⚖️ Balanced (15 steps) · ~35s</option>
             <option value="25">💎 High Quality (25 steps)</option>
             <option value="50">🔥 Ultra Detail (50 steps)</option>
@@ -594,7 +596,7 @@ function startGeneration() {
     // Health OK, submit job
     chrome.storage.local.get(['personImage', 'steps'], async (res) => {
       const selectSteps = document.getElementById('fashn-steps-select');
-      const userSteps = selectSteps ? parseInt(selectSteps.value, 10) : (res.steps ? parseInt(res.steps, 10) : 10);
+      const userSteps = selectSteps ? parseInt(selectSteps.value, 10) : (res.steps ? parseInt(res.steps, 10) : 6);
       const randomSeed = Math.floor(Math.random() * 900000) + 100000;
 
       // Pre-compress garment image to save 8-10s of upload bandwidth
